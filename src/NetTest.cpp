@@ -10,7 +10,7 @@ int main()
 	Transport::server()->on(Event::Connect, [=](Event::Connect* evt) { // Nouvelle connection
 		cout << "TCP: " << evt->req.ih.saddr << ":" << evt->req.th.sport << " -> " << evt->req.ih.daddr << ":" << evt->req.th.dport << endl;
 	})->on(Event::Error, [=](Event::Error* evt) { // Erreur
-		cerr << evt->msg.c_str() << endl;
+		cerr << evt->msg << endl;
 	})->listen();
 
 	/*Transport::request()->on(Event::Connect, [=](Event::Connect* evt) { // Reponse reçue

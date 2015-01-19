@@ -18,8 +18,6 @@ IF (WIN32)
     link_directories(${CMAKE_CURRENT_LIST_DIR}/dependencies/src/winpcap/Lib)
 
     add_definitions(-D_ALLOW_KEYWORD_MACROS -DHAVE_REMOTE)
-ELSE()
-    # download pcap
 ENDIF()
 
 set(SOURCES src/NetTest.cpp src/Client.h src/EventEmitter.h src/Events.h src/Packet.h src/Request.h src/Response.h src/Server.h src/Transport.h)
@@ -29,6 +27,4 @@ add_executable(Transport ${SOURCES})
 IF (WIN32)
     target_link_libraries(Transport wpcap)
     target_link_libraries(Transport Ws2_32)
-ELSE()
-    # link pcap
 ENDIF()
