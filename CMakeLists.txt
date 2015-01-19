@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 include(ExternalProject)
 
-project (NetStack)
+project (Transport)
 
 IF (WIN32)
     ExternalProject_Add(
@@ -24,11 +24,11 @@ ENDIF()
 
 set(SOURCES src/NetTest.cpp src/Client.h src/EventEmitter.h src/Events.h src/Packet.h src/Request.h src/Response.h src/Server.h src/Transport.h)
 
-add_executable(NetStack ${SOURCES})
+add_executable(Transport ${SOURCES})
 
 IF (WIN32)
-    target_link_libraries(NetStack wpcap)
-    target_link_libraries(NetStack Ws2_32)
+    target_link_libraries(Transport wpcap)
+    target_link_libraries(Transport Ws2_32)
 ELSE()
     # link pcap
 ENDIF()
