@@ -25,6 +25,7 @@ set(SOURCES src/NetTest.cpp src/Client.h src/EventEmitter.h src/Events.h src/Pac
 add_executable(Transport ${SOURCES})
 
 IF (WIN32)
+    add_dependencies(Transport winpcap)
     target_link_libraries(Transport wpcap)
     target_link_libraries(Transport Ws2_32)
 ENDIF()
