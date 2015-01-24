@@ -5,8 +5,7 @@
 using namespace std;
 using namespace Transport;
 
-int main()
-{
+int main() {
 	Transport::server()->on(Event::Connect, [=](Event::Connect* evt) { // Nouvelle connection
 		cout << "TCP: " << evt->req.ih.saddr << ":" << evt->req.th.sport << " -> " << evt->req.ih.daddr << ":" << evt->req.th.dport << endl;
 	})->on(Event::Error, [=](Event::Error* evt) { // Erreur
