@@ -3,6 +3,8 @@ include(ExternalProject)
 
 project (Transport)
 
+include_directories(include)
+
 IF (WIN32)
     ExternalProject_Add(
         winpcap
@@ -20,12 +22,24 @@ IF (WIN32)
     add_definitions(-D_ALLOW_KEYWORD_MACROS -DHAVE_REMOTE)
 ENDIF()
 
-set(SOURCES src/NetTest.cpp src/Client.h src/EventEmitter.h src/Events.h src/Packet.h src/Request.h src/Response.h src/Server.h src/Transport.h)
+set(SOURCES
+	include/Client.hpp src/Client.cpp
+	include/EventEmitter.hpp
+	include/Events.hpp src/Events.cpp
+	include/Packet.hpp src/Packet.cpp
+	include/Request.hpp src/Request.cpp
+	include/Response.hpp src/Response.cpp
+	include/Server.hpp src/Server.cpp
+	include/Transport.hpp src/Transport.cpp
+)
 
-add_executable(Transport ${SOURCES})
+add_library(Transport STATIC ${SOURCES})
+add_executable(NetTest test/NetTest.cpp)
+
+add_dependencies(NetTest Transport)
+target_link_libraries(NetTest Transport)
 
 IF (WIN32)
     add_dependencies(Transport winpcap)
-    target_link_libraries(Transport wpcap)
-    target_link_libraries(Transport Ws2_32)
+    target_link_libraries(Transport wpcap Ws2_32)
 ENDIF()

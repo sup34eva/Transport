@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Request.h"
-#include "Response.h"
-#include "Packet.h"
+#include <Request.hpp>
+#include <Response.hpp>
+#include <Packet.hpp>
+#include <string>
 
 namespace Transport {
 	namespace Error {
@@ -15,14 +16,14 @@ namespace Transport {
 	namespace Event {
 		class Connect {
 			public:
-				Connect(Request creq) : req(creq) {}
+				Connect(Request creq);
 				Request req;
 		};
 
 		class Error {
 			public:
-				Error(string aMsg) : msg(aMsg) {}
-				string msg;
+				Error(std::string aMsg);
+				std::string msg;
 		};
 	}
 }
