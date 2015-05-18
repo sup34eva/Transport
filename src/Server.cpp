@@ -1,18 +1,13 @@
 #include <Server.hpp>
-#include <thread>
-#include <vector>
 
 using namespace std;
 
 namespace Transport {
 	void Server::listen(uint16_t port) {
-			pcap_if_t *alldevs;
-			vector<thread*> threads;
-
 			// Retrieve the device list
 			char listBuf[PCAP_ERRBUF_SIZE];
 			if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, listBuf) == -1) {
-				emit(Event::Error("Error in pcap_findalldevs: " + string(listBuf)));
+				return emit(Event::Error("Error in pcap_findalldevs: " + string(listBuf)));
 			}
 
 			// Print the list
@@ -46,12 +41,12 @@ namespace Transport {
 							netmask = 0xffffff;
 
 
-						/*string filter = "tcp";
+						string filter = "ip";
 						if (port != NULL)
-							filter += "dst port " + to_string(port);*/
+							filter += " and dst port " + to_string(port);
 						// Compile the filter
 						struct bpf_program fcode;
-						if (pcap_compile(adhandle, &fcode, "ip", 1, netmask) < 0) {
+						if (pcap_compile(adhandle, &fcode, filter.c_str(), 1, netmask) < 0) {
 							throw Event::Error("Unable to compile the packet filter. Check the syntax.");
 						}
 
@@ -61,7 +56,11 @@ namespace Transport {
 						}
 
 						auto localIP = *(ip_address*)(d->addresses->addr->sa_data);
-						cout << "Listening on " << localIP << ":" << port << "..." << endl; // d->description
+						
+						ostringstream buffer;
+						buffer << "Listening on " << localIP << ":" << port << "..." << endl; // d->description
+						cout << buffer.str();
+
 						ip_address allIP{ 0, 0, 0, 0 };
 						bool acceptAll = (localIP == allIP);
 
@@ -86,7 +85,11 @@ namespace Transport {
 									case 1: { //ICMP
 										auto ich = (icmp_header*)(pkt_data + eth_len + ip_len);
 										ntohstr(ich);
-										cout << "ICMP: " << ich->code << endl;
+
+										ostringstream buffer;
+										buffer << "ICMP: " << ich->code << endl;
+										cout << buffer.str();
+
 										// Print data
 										printHex((uint8_t*)ich, sizeof(icmp_header));
 									}
@@ -99,7 +102,6 @@ namespace Transport {
 
 										//if (port == NULL || th->dport == port) {
 										if (true) {
-
 											// Retrieve payload
 											uint32_t tcp_len = th->offset * 4;
 											uint32_t payload_len = (header->caplen - eth_len - ip_len - tcp_len);
@@ -121,25 +123,28 @@ namespace Transport {
 					}
 				}));
 			}
+	}
 
-			for (auto thr : threads) {
-				thr->join();
-				delete thr;
-			}
+	Server::~Server() {
+		for (auto thr : threads) {
+			thr->join();
+			delete thr;
+		}
 
-			pcap_freealldevs(alldevs);
+		pcap_freealldevs(alldevs);
 	}
 
 	// Print payload data as hex
 	void Server::printHex(uint8_t* data, uint32_t length) {
 		char line[17];
+		ostringstream buffer;
 		for (uint32_t i = 0; i < length; i++) {
 			uint8_t c = data[i];
 
 			//Print the hex value for every character , with a space
 			ostringstream asHex;
 			asHex << setw(2) << setfill('0') << hex << (uint32_t)c;
-			cout << " " << asHex.str();
+			buffer << " " << asHex.str();
 
 			//Add the character to data line
 			uint8_t a = (c >= 32 && c <= 128) ? (uint8_t)c : '.';
@@ -151,16 +156,18 @@ namespace Transport {
 				line[i % 16 + 1] = '\0';
 
 				//print a big gap of 10 characters between hex and characters
-				cout << "          ";
+				buffer << "          ";
 
 				//Print additional spaces for last lines which might be less than 16 characters in length
 				for (int j = strlen(line); j < 16; j++) {
-					cout << "   ";
+					buffer << "   ";
 				}
 
-				cout << line << " " << endl;
+				buffer << line << " " << endl;
 			}
 		}
+
+		cout << buffer.str();
 	}
 
 	// Convert network-endian struct to host-endian struct

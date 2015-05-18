@@ -6,8 +6,10 @@
 #include <string>
 
 namespace Transport {
+	class Client; 
+
 	namespace Error {
-		enum ErrorCode {
+		enum Code {
 			NONE,
 			BAD_REQUEST
 		};
@@ -18,6 +20,7 @@ namespace Transport {
 			public:
 				Connect(Request creq);
 				Request req;
+				Client* res;
 		};
 
 		class Error {

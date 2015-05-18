@@ -4,6 +4,8 @@
 #include <Packet.hpp>
 #include <Events.hpp>
 #include <iostream>
+#include <thread>
+#include <vector>
 #include <pcap.h>
 
 namespace Transport {
@@ -13,6 +15,15 @@ namespace Transport {
 			ip_header constructIH();
 			tcp_header constructTH();
 		public:
-			void send(void* data);
+			Client();
+			void send(void* data = nullptr, const uint32_t size = 0);
+			~Client();
+
+			ethernet_header eh;
+			ip_header ih;
+			tcp_header th;
+		private:
+			pcap_if_t *alldevs;
+			std::vector<std::thread*> threads;
 	};
 }
