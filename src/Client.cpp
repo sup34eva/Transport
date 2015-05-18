@@ -5,14 +5,14 @@
 using namespace std;
 
 namespace Transport {
-	auto Client::constructEH() {
+	ethernet_header Client::constructEH() {
 		ethernet_header eh;
 		eh.dhost = { 108, 46, 133, 140, 154, 56 };
 		eh.shost = { 140, 137, 165, 13, 47, 123 };
 		eh.type = 8;
 		return eh;
 	}
-	auto Client::constructIH() {
+	ip_header Client::constructIH() {
 		ip_header ih;
 		//ih.ver_ihl = 69;
 		ih.tos = 0;
@@ -26,7 +26,7 @@ namespace Transport {
 		ih.daddr = { 178, 62, 65, 213 };
 		return ih;
 	}
-	auto Client::constructTH() {
+	tcp_header Client::constructTH() {
 		tcp_header th;
 		th.sport = 55745;
 		th.dport = 20480;

@@ -9,9 +9,9 @@
 namespace Transport {
 	class Client : public EventEmitter<Client> {
 		protected:
-			auto constructEH();
-			auto constructIH();
-			auto constructTH();
+			ethernet_header constructEH();
+			ip_header constructIH();
+			tcp_header constructTH();
 		public:
 			void send(void* data);
 	};
