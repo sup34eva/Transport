@@ -16,11 +16,17 @@ namespace Transport {
 
 	std::ostream& operator<<(std::ostream &strm, const mac_address &addr);
 
+	typedef enum ether_type {
+		IPV4 = 0x0800,
+		ARP = 0x0806,
+		IPV6 = 0x86DD
+	} ether_type;
+
 	// Ethernet header
 	typedef struct ethernet_header{
 		mac_address dhost;	// Destination host address
 		mac_address shost;	// Source host address
-		uint16_t type;		// Type (IP / ARP)
+		ether_type type;	// Type (IP / ARP)
 	} ethernet_header;
 
 	// 4 bytes IP address
@@ -34,6 +40,12 @@ namespace Transport {
 	std::ostream& operator<<(std::ostream &strm, const ip_address& addr);
 
 	bool operator==(const ip_address& a, const ip_address& b);
+
+	typedef enum protocol {
+		ICMP = 0x01,
+		TCP = 0x06,
+		UDP = 0x11
+	} protocol;
 
 	// IPv4 header
 	typedef struct ip_header
@@ -49,7 +61,7 @@ namespace Transport {
 		uint8_t res : 1;
 		uint8_t fragoff;			// Fragment offset
 		uint8_t ttl;				// Time to live
-		uint8_t proto;				// Protocol
+		protocol proto;				// Protocol
 		uint16_t ichecksum;			// Checksum
 		ip_address saddr;			// Source address
 		ip_address daddr;			// Destination address
@@ -86,4 +98,17 @@ namespace Transport {
 		uint16_t id;
 		uint16_t seq;
 	} icmp_header;
+
+	// ARP Header
+	typedef struct arp_header {
+		uint16_t htype; // Hardware Type
+		uint16_t ptype; // Protocol Type
+		uint8_t hlen; // Hardware address length
+		uint8_t plen; // Protocol address length
+		uint16_t oper; // Operation
+		mac_address sha; // Sender hardware address
+		ip_address spa; // Sender protocol address
+		mac_address tha; // Target hardware address
+		ip_address tpa; // Target protocol address
+	} arp_header;
 }

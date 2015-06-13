@@ -10,10 +10,6 @@
 
 namespace Transport {
 	class Client : public EventEmitter<Client> {
-		protected:
-			ethernet_header constructEH();
-			ip_header constructIH();
-			tcp_header constructTH();
 		public:
 			Client();
 			void send(void* data = nullptr, const uint32_t size = 0);
@@ -22,6 +18,15 @@ namespace Transport {
 			ethernet_header eh;
 			ip_header ih;
 			tcp_header th;
+
+		protected:
+			ethernet_header constructEH();
+			ip_header constructIH();
+			tcp_header constructTH();
+
+			void htohntr(tcp_header* th);
+			void htohntr(icmp_header* ich);
+
 		private:
 			pcap_if_t *alldevs;
 			std::vector<std::thread*> threads;

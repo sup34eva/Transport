@@ -41,9 +41,7 @@ namespace Transport {
 							netmask = 0xffffff;
 
 
-						string filter = "ip";
-						if (port != NULL)
-							filter += " and dst port " + to_string(port);
+						string filter = "ip proto \\icmp or \\tcp";
 						// Compile the filter
 						struct bpf_program fcode;
 						if (pcap_compile(adhandle, &fcode, filter.c_str(), 1, netmask) < 0) {
@@ -74,48 +72,58 @@ namespace Transport {
 
 							// Retrieve the Ethernet header
 							auto eh = (ethernet_header*)pkt_data;
-
-							// Retrieve the IP header
 							uint32_t eth_len = sizeof(ethernet_header);
-							auto ih = (ip_header*)(pkt_data + eth_len);
-							uint32_t ip_len = ih->hlen * 4;
 
-							if (ih->daddr == localIP || acceptAll) {
-								switch (ih->proto) {
-									case 1: { //ICMP
-										auto ich = (icmp_header*)(pkt_data + eth_len + ip_len);
-										ntohstr(ich);
+							switch (eh->type) {
+								case ARP: {
+									// Retrieve the ARP header
+									auto ah = (arp_header*)(pkt_data + eth_len);
+								}
+								break;
 
-										ostringstream buffer;
-										buffer << "ICMP: " << ich->code << endl;
-										cout << buffer.str();
+								case IPV4: {
+									// Retrieve the IP header
+									auto ih = (ip_header*)(pkt_data + eth_len);
+									uint32_t ip_len = ih->hlen * 4;
 
-										// Print data
-										printHex((uint8_t*)ich, sizeof(icmp_header));
-									}
-									break;
+									if (ih->daddr == localIP || acceptAll) {
+										switch (ih->proto) {
+											case ICMP: { // ICMP
+												auto ich = (icmp_header*)(pkt_data + eth_len + ip_len);
+												ntohstr(ich);
 
-									case 6:  {//TCP
-										// Retrieve the TCP header
-										auto th = (tcp_header*)(pkt_data + eth_len + ip_len);
-										ntohstr(th);
+												ostringstream buffer;
+												buffer << "ICMP: " << ich->code << endl;
+												cout << buffer.str();
 
-										//if (port == NULL || th->dport == port) {
-										if (true) {
-											// Retrieve payload
-											uint32_t tcp_len = th->offset * 4;
-											uint32_t payload_len = (header->caplen - eth_len - ip_len - tcp_len);
-											auto payload = (uint8_t*)(pkt_data + eth_len + ip_len + tcp_len);
+												// Print data
+												printHex((uint8_t*)ich, sizeof(icmp_header));
+											}
+											break;
 
-											// Emit a connect event
-											emit(Event::Connect(Request(*eh, *ih, *th, header->ts.tv_sec, header->caplen)));
+											case TCP: {// TCP
+												// Retrieve the TCP header
+												auto th = (tcp_header*)(pkt_data + eth_len + ip_len);
+												ntohstr(th);
 
-											// Print payload
-											printHex(payload, payload_len);
+												if (port == NULL || th->dport == port) {
+													// Retrieve payload
+													uint32_t tcp_len = th->offset * 4;
+													uint32_t payload_len = (header->caplen - eth_len - ip_len - tcp_len);
+													auto payload = (uint8_t*)(pkt_data + eth_len + ip_len + tcp_len);
+
+													// Emit a connect event
+													emit(Event::Connect(Request(*eh, *ih, *th, header->ts.tv_sec, header->caplen)));
+
+													// Print payload
+													printHex(payload, payload_len);
+												}
+											}
+											break;
 										}
 									}
-									break;
 								}
+								break;
 							}
 						}
 					} catch (const Event::Error& err) {
@@ -180,6 +188,7 @@ namespace Transport {
 		th->checksum = ntohs(th->checksum);
 		th->urgent_pointer = ntohs(th->urgent_pointer);
 	}
+
 	void Server::ntohstr(icmp_header* ich) {
 		ich->checksum = ntohs(ich->checksum);
 		ich->id = ntohs(ich->id);

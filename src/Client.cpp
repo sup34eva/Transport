@@ -5,54 +5,16 @@
 using namespace std;
 
 namespace Transport {
-	ethernet_header Client::constructEH() {
-		ethernet_header eh;
-		eh.dhost = { 0, 0, 0, 0, 0, 0 };
-		eh.shost = { 0, 0, 0, 0, 0, 0 };
-		eh.type = 8;
-		return eh;
-	}
-
-	ip_header Client::constructIH() {
-		ip_header ih;
-		//ih.ver_ihl = 69;
-		ih.tos = 0;
-		ih.tlen = 13312;
-		//ih.identification = 19570;
-		//ih.flags_fo = 64;
-		ih.ttl = 128;
-		ih.proto = 6;
-		//ih.crc = 0;
-		ih.saddr = { 0, 0, 0, 0 };
-		ih.daddr = { 0, 0, 0, 0 };
-		return ih;
-	}
-
-	tcp_header Client::constructTH() {
-		tcp_header th;
-		th.sport = 55745;
-		th.dport = 20480;
-		/*th.seqnum = 1121682558;
-		th.acknum = 2328941219;
-		th.th_off = 128;
-		th.flags = 16;
-		th.win = 1026;
-		th.crc = 61365;
-		th.urgptr = 0;*/
-		return th;
-	}
-
 	Client::Client() : eh(constructEH()), ih(constructIH()), th(constructTH()) {
-		//
 	}
 
 	void Client::send(void* data, const uint32_t size) {
-		// Retrieve the device list
 		char listBuf[PCAP_ERRBUF_SIZE];
-		if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, listBuf) == -1)
-		{
+		if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, listBuf) == -1) {
 			return emit(Event::Error("Error in pcap_findalldevs: " + string(listBuf)));
 		}
+
+		htohntr(&th);
 
 		threads.push_back(new thread([=](){
 			pcap_if_t *d;
@@ -70,7 +32,6 @@ namespace Transport {
 			auto length = eth_len + ip_len + tcp_len + size;
 
 			for (d = alldevs; d; d = d->next) {
-				// Open the output device
 				pcap_t *adhandle;
 				if ((adhandle = pcap_open(d->name,	// name of the device
 					100,							// portion of the packet to capture (only the first 100 bytes)
@@ -83,7 +44,6 @@ namespace Transport {
 					continue;
 				}
 
-				// Send down the packet
 				if (pcap_sendpacket(adhandle, packet, length) != 0) {
 					emit(Event::Error("Error sending the packet: " + string(pcap_geterr(adhandle))));
 					continue;
@@ -101,5 +61,48 @@ namespace Transport {
 		}
 
 		pcap_freealldevs(alldevs);
+	}
+
+	ethernet_header Client::constructEH() {
+		ethernet_header eh;
+		eh.dhost = { 0, 0, 0, 0, 0, 0 };
+		eh.shost = { 0, 0, 0, 0, 0, 0 };
+		eh.type = IPV4;
+		return eh;
+	}
+
+	ip_header Client::constructIH() {
+		ip_header ih;
+		ih.tos = 0;
+		ih.tlen = 0;
+		ih.ttl = 128;
+		ih.proto = TCP;
+		ih.saddr = { 0, 0, 0, 0 };
+		ih.daddr = { 0, 0, 0, 0 };
+		return ih;
+	}
+
+	tcp_header Client::constructTH() {
+		tcp_header th;
+		th.sport = 0;
+		th.dport = 0;
+		return th;
+	}
+
+	// Converts Host-endian structs to Network-endian
+	void Client::htohntr(tcp_header* th) {
+		th->sport = htons(th->sport);
+		th->dport = htons(th->dport);
+		th->sequence = htonl(th->sequence);
+		th->acknowledge = htonl(th->acknowledge);
+		th->window = htons(th->window);
+		th->checksum = htons(th->checksum);
+		th->urgent_pointer = htons(th->urgent_pointer);
+	}
+
+	void Client::htohntr(icmp_header* ich) {
+		ich->checksum = htons(ich->checksum);
+		ich->id = htons(ich->id);
+		ich->seq = htons(ich->seq);
 	}
 }
