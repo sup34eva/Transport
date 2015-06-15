@@ -15,12 +15,13 @@ namespace Transport {
 	} mac_address;
 
 	std::ostream& operator<<(std::ostream &strm, const mac_address &addr);
+	bool operator==(const mac_address& a, const mac_address& b);
 
-	typedef enum ether_type {
+	enum ether_type : uint16_t {
 		IPV4 = 0x0800,
 		ARP = 0x0806,
 		IPV6 = 0x86DD
-	} ether_type;
+	};
 
 	// Ethernet header
 	typedef struct ethernet_header{
@@ -38,18 +39,16 @@ namespace Transport {
 	} ip_address;
 
 	std::ostream& operator<<(std::ostream &strm, const ip_address& addr);
-
 	bool operator==(const ip_address& a, const ip_address& b);
 
-	typedef enum protocol {
+	enum protocol : uint8_t {
 		ICMP = 0x01,
 		TCP = 0x06,
 		UDP = 0x11
-	} protocol;
+	};
 
 	// IPv4 header
-	typedef struct ip_header
-	{
+	typedef struct ip_header {
 		uint8_t hlen : 4;			// Header length
 		uint8_t version : 4;		// IPv4 version
 		uint8_t tos;				// Type of service
@@ -62,14 +61,13 @@ namespace Transport {
 		uint8_t fragoff;			// Fragment offset
 		uint8_t ttl;				// Time to live
 		protocol proto;				// Protocol
-		uint16_t ichecksum;			// Checksum
+		uint16_t checksum;			// Checksum
 		ip_address saddr;			// Source address
 		ip_address daddr;			// Destination address
 	} ip_header;
 
 	// TCP header
-	typedef struct tcp_header
-	{
+	typedef struct tcp_header {
 		uint16_t sport;				// Source port
 		uint16_t dport;				// Destination port
 		uint32_t sequence;			// Sequence number
@@ -111,4 +109,12 @@ namespace Transport {
 		mac_address tha; // Target hardware address
 		ip_address tpa; // Target protocol address
 	} arp_header;
+
+	void hton(ethernet_header* eh);
+	void hton(tcp_header* th);
+	void hton(icmp_header* ich);
+
+	void ntoh(ethernet_header* eh);
+	void ntoh(tcp_header* th);
+	void ntoh(icmp_header* ich);
 }

@@ -20,10 +20,6 @@ namespace Transport {
 		protected:
 			// Print payload data as hex
 			void printHex(uint8_t* data, uint32_t length);
-
-			// Convert network-endian struct to host-endian struct
-			void ntohstr(tcp_header* th);
-			void ntohstr(icmp_header* ich);
 		private:
 			pcap_if_t *alldevs;
 			std::vector<std::thread*> threads;

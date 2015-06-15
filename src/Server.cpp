@@ -41,7 +41,7 @@ namespace Transport {
 							netmask = 0xffffff;
 
 
-						string filter = "ip proto \\icmp or \\tcp";
+						string filter = "ether proto \\arp or ip proto \\icmp or \\tcp";
 						// Compile the filter
 						struct bpf_program fcode;
 						if (pcap_compile(adhandle, &fcode, filter.c_str(), 1, netmask) < 0) {
@@ -73,11 +73,14 @@ namespace Transport {
 							// Retrieve the Ethernet header
 							auto eh = (ethernet_header*)pkt_data;
 							uint32_t eth_len = sizeof(ethernet_header);
+							ntoh(eh);
 
 							switch (eh->type) {
 								case ARP: {
 									// Retrieve the ARP header
 									auto ah = (arp_header*)(pkt_data + eth_len);
+									if(ah->htype == 1)
+										cout << "ARP" << endl;
 								}
 								break;
 
@@ -90,7 +93,7 @@ namespace Transport {
 										switch (ih->proto) {
 											case ICMP: { // ICMP
 												auto ich = (icmp_header*)(pkt_data + eth_len + ip_len);
-												ntohstr(ich);
+												ntoh(ich);
 
 												ostringstream buffer;
 												buffer << "ICMP: " << ich->code << endl;
@@ -104,7 +107,7 @@ namespace Transport {
 											case TCP: {// TCP
 												// Retrieve the TCP header
 												auto th = (tcp_header*)(pkt_data + eth_len + ip_len);
-												ntohstr(th);
+												ntoh(th);
 
 												if (port == NULL || th->dport == port) {
 													// Retrieve payload
@@ -176,22 +179,5 @@ namespace Transport {
 		}
 
 		cout << buffer.str();
-	}
-
-	// Convert network-endian struct to host-endian struct
-	void Server::ntohstr(tcp_header* th) {
-		th->sport = ntohs(th->sport);
-		th->dport = ntohs(th->dport);
-		th->sequence = ntohl(th->sequence);
-		th->acknowledge = ntohl(th->acknowledge);
-		th->window = ntohs(th->window);
-		th->checksum = ntohs(th->checksum);
-		th->urgent_pointer = ntohs(th->urgent_pointer);
-	}
-
-	void Server::ntohstr(icmp_header* ich) {
-		ich->checksum = ntohs(ich->checksum);
-		ich->id = ntohs(ich->id);
-		ich->seq = ntohs(ich->seq);
 	}
 }
